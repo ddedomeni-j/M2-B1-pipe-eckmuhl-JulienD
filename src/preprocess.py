@@ -30,15 +30,21 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
 
 NUMERIC_FEATURES: list[str] = [
     # ex. "duration_months", "credit_amount", "age", ...
+    "duration_months", "credit_amount", "installment_rate_pct_income", "residence_since_years", "age", "n_existing_credits", "n_people_liable"
 ]
 ORDINAL_FEATURES: dict[str, list[str]] = {
     # ex. "savings_account": ["< 100 DM", "100-500 DM", "500-1000 DM",
     #                         ">= 1000 DM", "unknown / no savings"],
     # Note : l'ordre des modalités encode la sémantique.
+
+    "checking_account_status" : ["no checking account", "< 0 DM", "0 to 200 DM", ">= 200 DM / salary assignments"],
+    "savings_account" : ["unknown / no savings", "< 100 DM", "100-500 DM", "500-1000 DM", ">= 1000 DM"],
+    "employment_since" : ["unemployed", "< 1 year", "1-4 years", "4-7 years", ">= 7 years"],
+    "property" : ["unknown / no property", "car or other", "savings agreement / life insurance", "real estate"]
 }
-CATEGORICAL_FEATURES: list[str] = [
-    # ex. "purpose", "housing", "telephone", ...
-]
+
+CATEGORICAL_FEATURES: list[str] = ["purpose", "other_installment_plans", "housing", "telephone", "other_debtors", "job", "credit_history"]
+
 TARGET_COLUMN: str = "credit_risk"
 TARGET_MAPPING: dict[str, int] = {"good_credit": 0, "bad_credit": 1}
 
@@ -50,7 +56,7 @@ def load_dataset(path: Path) -> tuple[pd.DataFrame, pd.Series]:
     Les colonnes du CSV qui ne sont dans aucune liste sont **droppées**
     — sois explicite sur tes choix.
     """
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, sep=";")
     # TODO (tâche 5 bis — geste « adapter ») : un complément arrive en cours de
     # mission → data/german_credit_supplement.csv (colonne `customer_segment`,
     # même ordre de lignes). Charge-le, joins-le ici par position, décide de sa
