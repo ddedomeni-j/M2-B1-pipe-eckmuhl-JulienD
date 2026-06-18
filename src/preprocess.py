@@ -40,7 +40,8 @@ ORDINAL_FEATURES: dict[str, list[str]] = {
     "checking_account_status" : ["no checking account", "< 0 DM", "0 to 200 DM", ">= 200 DM / salary assignments"],
     "savings_account" : ["unknown / no savings", "< 100 DM", "100-500 DM", "500-1000 DM", ">= 1000 DM"],
     "employment_since" : ["unemployed", "< 1 year", "1-4 years", "4-7 years", ">= 7 years"],
-    "property" : ["unknown / no property", "car or other", "savings agreement / life insurance", "real estate"]
+    "property" : ["unknown / no property", "car or other", "savings agreement / life insurance", "real estate"],
+    "customer_segment" : ["basic", "plus", "private", "premium"]
 }
 
 CATEGORICAL_FEATURES: list[str] = ["purpose", "other_installment_plans", "housing", "telephone", "other_debtors", "job", "credit_history"]
@@ -57,20 +58,39 @@ def load_dataset(path: Path) -> tuple[pd.DataFrame, pd.Series]:
     — sois explicite sur tes choix.
     """
     df = pd.read_csv(path, sep=";")
+    
     # TODO (tâche 5 bis — geste « adapter ») : un complément arrive en cours de
     # mission → data/german_credit_supplement.csv (colonne `customer_segment`,
     # même ordre de lignes). Charge-le, joins-le ici par position, décide de sa
     # nature (numérique / ordinale / nominale ?) et ajoute-la à la BONNE liste
     # de features ci-dessus. N'oublie pas ses ~4 % de manquants.
     # (À toi de trouver comment charger et joindre ce complément — c'est le geste « adapter ».)
+
+    # Chargement du complément
+    supplement_path = path.parent / "german_credit_supplement.csv"
+    supplement = pd.read_csv(supplement_path, sep=";")
+
+    # Vérification de cohérence des lignes
+    if len(supplement) != len(df):
+        raise ValueError(
+            f"Le complément contient {len(supplement)} lignes, "
+            f"mais le dataset principal en contient {len(df)}."
+        )
+
+    # Jointure par position
+    df["customer_segment"] = supplement["customer_segment"].values
+
+    # Construction du dataframe complet et de la cible
     y = df[TARGET_COLUMN].map(TARGET_MAPPING)
     if y.isna().any():
         unknown = df.loc[y.isna(), TARGET_COLUMN].unique().tolist()
         raise ValueError(f"Cible non mappée : {unknown}")
     all_features = NUMERIC_FEATURES + list(ORDINAL_FEATURES) + CATEGORICAL_FEATURES
+
     missing = [c for c in all_features if c not in df.columns]
     if missing:
         raise KeyError(f"Colonnes attendues absentes du CSV : {missing}")
+    
     X = df[all_features].copy()
     return X, y
 
